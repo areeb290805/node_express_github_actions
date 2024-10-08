@@ -1,6 +1,4 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI Heroku Deployment
+name: CI Azure Deployment
 
 # Controls when the workflow will run
 on:
@@ -13,49 +11,47 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Install nodeJs
+      # Install Node.js
       - name: Use Node.js
         uses: actions/setup-node@v2
         with: 
-          node-version: "14.x"
-      
+          node-version: "18.x"  # Using Node 18.x since this is what Azure App Service is configured for
+
       # Install project dependencies
       - name: Install dependencies
         run: npm install
 
-      #- name: Run test
+      # Optional: Run tests (uncomment if you want to add tests)
+      #- name: Run tests
       #  run: npm test
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # Build your project (if necessary)
+      - name: Build the app
+        run: npm run build # Adjust if needed
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
-  
-  # Deploy To Heroku
+  # Deploy to Azure App Service
   deploy:
     runs-on: ubuntu-latest
     needs: [build]
+
     steps:
+      # Checks out your repository again for the deploy step
       - uses: actions/checkout@v2
-      - uses: akhileshns/heroku-deploy@v3.12.12 
+
+      # Deploy to Azure App Service
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
         with:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "devops-node-express" #Must be unique in Heroku
-          heroku_email: "pritam.world@gmail.com"
+          app-name: 'your-app-service-name'  # The name of your Azure App Service
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }} # Azure Publish Profile secret
+          package: .
+
